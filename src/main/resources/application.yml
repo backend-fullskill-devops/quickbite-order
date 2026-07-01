@@ -16,3 +16,13 @@ spring:
 
 server:
   port: ${SERVER_PORT:8083}
+
+feign:
+  client:
+    config:
+      user-service:
+        url: ${FEIGN_CLIENT_CONFIG_USER_SERVICE_URL:http://user-service:8081}
+      restaurant-service:
+        url: ${FEIGN_CLIENT_CONFIG_RESTAURANT_SERVICE_URL:http://restaurant-service:8082}
+      notification-service:
+        url: ${FEIGN_CLIENT_CONFIG_NOTIFICATION_SERVICE_URL:http://notification-service:8084}
