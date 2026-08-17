@@ -29,7 +29,8 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
-        log.info("Creating order for customer: {}, restaurant: {}", request.getCustomerId(), request.getRestaurantId());
+        log.info("Order creation started: customerId={}, restaurantId={}",
+                request.getCustomerId(), request.getRestaurantId());
 
         // 1. Check restaurant status
         ApiResponse<Boolean> statusRes = restaurantFeignClient.getRestaurantStatus(request.getRestaurantId());
@@ -142,13 +143,14 @@ public class OrderService {
             );
 
         } catch (Exception e) {
-            log.error("Exception during payment for Order ID " + savedOrder.getId(), e);
+            log.error("Payment processing failed: orderId={}", savedOrder.getId(), e);
             if (savedOrder.getStatus() == OrderStatus.PENDING) {
                 failOrder(savedOrder, "Payment failed due to internal error: " + e.getMessage());
             }
             throw new RuntimeException("Order creation failed: " + e.getMessage());
         }
 
+        log.info("Order created successfully: orderId={}", savedOrder.getId());
         return mapToOrderResponse(savedOrder);
     }
 
@@ -241,7 +243,7 @@ public class OrderService {
                 log.info("Compensating transaction (refund) succeeded for Order ID {}", order.getId());
             }
         } catch (Exception ex) {
-            log.error("Compensating transaction (refund) encountered error for Order ID " + order.getId(), ex);
+            log.error("Compensating transaction (refund) encountered error: orderId={}", order.getId(), ex);
         }
 
         sendNotificationSilently(order.getCustomerId(),
@@ -326,7 +328,7 @@ public class OrderService {
                     .build();
             notificationFeignClient.sendNotification(requestDto);
         } catch (Exception ex) {
-            log.error("Failed to send notification via Feign for user " + userId, ex);
+            log.error("Failed to send notification via Feign: userId={}", userId, ex);
         }
     }
 
